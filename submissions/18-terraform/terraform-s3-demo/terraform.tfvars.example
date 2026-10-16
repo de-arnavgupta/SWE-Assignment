@@ -1,0 +1,7 @@
+# Safe Example Terraform Variables
+# Copy to terraform.tfvars for local execution.
+# NEVER commit real credentials or private variable files to Git!
+
+aws_region    = "us-east-1"
+bucket_prefix = "devops-lab-arnavgupta"
+environment   = "lab"
