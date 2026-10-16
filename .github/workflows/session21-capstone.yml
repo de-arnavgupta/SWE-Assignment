@@ -41,7 +41,11 @@ jobs:
         run: |
           cd session21-python/backend
           export PYTHONPATH=.
-          python -m pytest -v tests
+          python -m pytest -v tests 2>&1 | tee /tmp/pytest.log || {
+            rc=$?
+            echo "::error title=Pytest Error::$(head -n 20 /tmp/pytest.log | tr '\n' ' ')"
+            exit $rc
+          }
 
       # 2. Frontend Build Verification
       - name: Set up Node.js 20
