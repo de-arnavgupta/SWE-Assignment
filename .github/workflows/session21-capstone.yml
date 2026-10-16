@@ -26,21 +26,22 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
+          cache-dependency-path: session21-python/backend/requirements.txt
 
       - name: Install Backend Test Dependencies
         run: |
-          cd session21-python/backend
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pytest flake8
+          python -m pip install -r session21-python/backend/requirements.txt pytest flake8
 
       - name: Lint Backend Code
         run: |
-          flake8 session21-python/backend/app --count --select=E9,F63,F7,F82 --show-source --statistics
+          python -m flake8 session21-python/backend/app --count --select=E9,F63,F7,F82 --show-source --statistics
 
       - name: Run Pytest Suite with Coverage
         run: |
           cd session21-python/backend
-          pytest -v
+          export PYTHONPATH=.
+          python -m pytest -v tests
 
       # 2. Frontend Build Verification
       - name: Set up Node.js 20

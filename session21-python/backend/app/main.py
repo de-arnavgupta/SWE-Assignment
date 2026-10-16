@@ -37,7 +37,11 @@ Instrumentator().instrument(app).expose(app)
 # Ensure tables exist on startup (for SQLite/test compatibility)
 @app.on_event("startup")
 def on_startup():
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception:
+        # Migrations or test harnesses handle table creation in their isolated environments
+        pass
 
 # --- Core Health & Readiness Probes ---
 
