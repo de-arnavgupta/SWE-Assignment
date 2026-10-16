@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: nginx:alpine
+    container_name: session8-frontend
+    ports:
+      - "8080:80"
+    networks:
+      - frontend_net
+    restart: unless-stopped
+
+  backend:
+    image: alpine:latest
+    container_name: session8-backend
+    command: ["sh", "-c", "while true; do sleep 3600; done"]
+    networks:
+      - frontend_net
+      - backend_net
+    restart: unless-stopped
+
+  database:
+    image: mysql:8.0
+    container_name: session8-database
+    environment:
+      MYSQL_ROOT_PASSWORD: secure_devops_password
+      MYSQL_DATABASE: session8_db
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - backend_net
+      - db_net
+    restart: unless-stopped
+
+networks:
+  frontend_net:
+    driver: bridge
+  backend_net:
+    driver: bridge
+  db_net:
+    driver: bridge
+
+volumes:
+  db_data:
+    driver: local
