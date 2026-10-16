@@ -1,0 +1,46 @@
+frontend:
+  image: ghcr.io/de-arnavgupta/mentorsync-frontend
+  tag: latest
+  replicas: 2
+  port: 80
+
+backend:
+  image: ghcr.io/de-arnavgupta/mentorsync-backend
+  tag: latest
+  replicas: 2
+  port: 8000
+
+replicaCount: 2
+namespace: mentorsync
+imagePullSecrets: []
+
+postgres:
+  host: mentorsync-postgres
+  database: mentorsync
+  username: mentorsync
+  password: mentorsync_secure_pass_2026
+  storage: 5Gi
+
+ingress:
+  enabled: true
+  className: nginx
+  host: mentorsync.local
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 60
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+    interval: 15s

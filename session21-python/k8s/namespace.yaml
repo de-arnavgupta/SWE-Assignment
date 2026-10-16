@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mentorsync
+  labels:
+    app.kubernetes.io/name: mentorsync
+    app.kubernetes.io/part-of: capstone
+    student: arnavgupta
+    roll: "24bcs10063"

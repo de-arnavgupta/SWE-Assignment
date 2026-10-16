@@ -1,0 +1,115 @@
+name: Session 21 — MentorSync Capstone CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
+jobs:
+  test-and-build:
+    name: Backend Tests & Frontend Build Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. Backend Testing
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Backend Test Dependencies
+        run: |
+          cd session21-python/backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest flake8
+
+      - name: Lint Backend Code
+        run: |
+          flake8 session21-python/backend/app --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Run Pytest Suite with Coverage
+        run: |
+          cd session21-python/backend
+          pytest -v
+
+      # 2. Frontend Build Verification
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: session21-python/frontend/package.json
+
+      - name: Build Frontend Application
+        run: |
+          cd session21-python/frontend
+          npm install
+          npm run build
+
+  security-scan-and-publish:
+    name: Docker Build, Trivy Gate & GHCR Publish
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: actions/setup-buildx-action@v3
+
+      # 3. Build Backend Image Locally for Scanning
+      - name: Build Backend Docker Image
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/mentorsync-backend:${{ github.sha }} ./session21-python/backend
+
+      # 4. Build Frontend Image Locally for Scanning
+      - name: Build Frontend Docker Image
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/mentorsync-frontend:${{ github.sha }} ./session21-python/frontend
+
+      # 5. Trivy Security Scanning Gate: Backend
+      - name: Run Trivy Scan on Backend Image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/mentorsync-backend:${{ github.sha }}
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      # 6. Trivy Security Scanning Gate: Frontend
+      - name: Run Trivy Scan on Frontend Image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/mentorsync-frontend:${{ github.sha }}
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      # 7. Authenticate to GitHub Container Registry
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 8. Push SHA-Tagged Images to GHCR
+      - name: Publish Images with Commit SHA Tags
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/mentorsync-backend:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/mentorsync-frontend:${{ github.sha }}

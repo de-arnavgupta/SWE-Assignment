@@ -1,0 +1,5 @@
+# Safe Example Variables for Session 21 EKS Terraform
+# DO NOT commit real credentials or state files.
+
+aws_region   = "us-east-1"
+cluster_name = "mentorsync-eks"

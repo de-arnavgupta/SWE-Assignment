@@ -1,0 +1,6 @@
+apiVersion: v2
+name: mentorsync
+description: MentorSync Office Hours & Peer Tutoring Platform Helm Chart by Arnav Gupta (24bcs10063)
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

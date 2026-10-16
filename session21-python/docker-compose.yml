@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mentorsync-postgres
+    environment:
+      POSTGRES_DB: mentorsync
+      POSTGRES_USER: mentorsync
+      POSTGRES_PASSWORD: mentorsync_secure_pass_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mentorsync -d mentorsync"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: mentorsync-backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://mentorsync:mentorsync_secure_pass_2026@postgres:5432/mentorsync
+      APP_NAME: "MentorSync API"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: mentorsync-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
